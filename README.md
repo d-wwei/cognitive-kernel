@@ -1,113 +1,175 @@
+[English](README.md) | [中文](README.zh.md)
+
 # Cognitive Kernel
 
-认知底座的安装器、组装器和运行时工具。6 层干预框架让认知底座从"请记得遵守"升级为"结构性强制"。
+**Rules don't enforce themselves.**
 
-## 问题
+One cognitive base, 30 lines of rules, injected into `CLAUDE.md` — it works. The agent's thinking changes. You can see it in the output.
 
-19 个认知底座全文注入 CLAUDE.md（720+ 行 / 100+ 规则），导致注意力稀释。Agent 在关键决策时刻无法激活正确的规则。
+Now install 19 bases. That's 720+ lines of rules, 100+ individual instructions, all competing for the agent's attention in the same context window. What happens? The same thing that happens when you tape 100 checklists to a wall — nobody reads any of them. The agent's attention gets diluted. Critical rules get skipped. The cognitive bases you installed are technically "active" but functionally invisible.
 
-## 解决方案：6 层干预模型
+## Why Text Rules Fail
 
-| Layer | 机制 | 强度 |
-|-------|------|------|
-| L1 | 输出模板：## heading 必填字段 | 最强 |
-| L2 | Hooks：平台 hook 自动注入提醒 | 强 |
-| L3 | If-Then 触发器：模式→动作规则 | 中强 |
-| L4 | 外部验证：子 Agent 对抗性审查 | 强 |
-| L5 | 核心透镜：少量规则常驻 context | 弱 |
-| L6 | Skill 参考：按需加载完整底座 | 弱 |
+Writing "you must do X" in a config file is the weakest possible intervention. It depends entirely on the agent noticing the rule, at the right moment, under cognitive load. That's like depending on a factory worker reading a safety poster while operating heavy machinery.
 
-## 安装
+The 6-layer model replaces hope with structure. Instead of one mechanism (text in a file), each rule is enforced through the strongest viable channel:
 
-### 前提
+| Layer | Mechanism | Strength | How It Works |
+|-------|-----------|----------|-------------|
+| **L1** | Output templates | Strongest | Agent's response must include specific fields — structurally incomplete without them |
+| **L2** | Hooks | Strong | Platform hooks auto-inject reminders before key actions — agent gets intercepted |
+| **L3** | If-Then triggers | Medium | Pattern-matched rules fire automatically — no willpower needed |
+| **L4** | External verification | Strong | A separate sub-agent reviews the work adversarially — self-checking doesn't work |
+| **L5** | Core rules | Weak | A few critical rules stay in context — always visible, but still voluntary |
+| **L6** | Skill reference | Weakest | Full framework loaded on demand — agent has to choose to read it |
 
-- Claude Code（或其他支持的 AI 编程工具）
-- 认知底座仓库（包含 manifest.yml 的底座目录）
+**The key insight:** L1 and L2 are structural — the agent cannot produce valid output without complying. L5 and L6 are voluntary — the agent can ignore them under pressure. The kernel puts each rule at the strongest layer it can occupy.
 
-### 步骤
+## Three Jobs
 
-1. **安装内核 skill**：
-   将 `cognitive-kernel/` 目录放到 `~/.claude/skills/cognitive-kernel/`
+Cognitive Kernel does exactly three things:
 
-2. **初始化**：
-   在 AI agent 会话中执行 `/cognitive-kernel setup`
+### 1. Conflict Analysis
 
-3. **安装底座**：
+When you install a new base, the kernel compares its manifest against every already-installed base:
+
+- **L1 overlap** — Do two bases require similar output fields? (e.g., both want an "assumptions" section → merge or prioritize)
+- **L3 tension** — Do triggers point in opposite directions? (e.g., "decompose to parts" vs "see the whole first" → define which fires when)
+- **L5 conflict** — Do core rules contradict? (e.g., "act fast" vs "verify first" → dialectical resolution)
+
+The kernel reports overlaps, tensions, and conflicts, then proposes resolutions. You decide.
+
+### 2. Budget Management
+
+The context window is finite. More rules ≠ better thinking. The kernel enforces budgets:
+
+- **L5 core rules**: max 4 bases active simultaneously (~12 rules total). More than that → attention dilution.
+- **L1 output fields**: per-context budgets (5 fields when proposing a solution, 3 when claiming completion). Prevents output template bloat.
+
+When you try to install a 5th L5 base, the kernel warns you and asks which one to demote to L6 (on-demand only).
+
+### 3. 6-Layer Assembly
+
+Each cognitive base describes itself through `manifest.yml` — what it needs at each intervention layer. The kernel reads every installed base's manifest and assembles the runtime:
+
+- L1 fields → written into `~/.cognitive-kernel/cognitive-kernel.md` as output template headings
+- L2 hooks → registered with the platform's hook system (e.g., Claude Code's `ft-settings.json`)
+- L3 triggers → assembled as if-then rules in the runtime config
+- L4 prompts → stored as adversarial review briefs for sub-agents
+- L5 rules → selected by budget, injected into always-on context
+- L6 refs → registered as available skills for on-demand loading
+
+Run `/cognitive-kernel regenerate` to rebuild the runtime from scratch based on current registry state.
+
+## Quick Start
+
+### Via meta-cogbase (Recommended)
+
+If you installed [meta-cogbase](https://github.com/d-wwei/meta-cogbase), you already have the kernel. Nothing else to do.
+
+### Manual Installation
+
+1. Copy the skill files to your agent's skill directory:
+   ```bash
+   mkdir -p ~/.claude/skills/cognitive-kernel
+   cp SKILL.md README.md ~/.claude/skills/cognitive-kernel/
+   ```
+
+2. Initialize the kernel:
+   ```
+   /cognitive-kernel setup
+   ```
+
+3. Install cognitive bases:
    ```
    /cognitive-kernel install /path/to/first-principles
-   /cognitive-kernel install /path/to/systems-thinking
+   /cognitive-kernel install /path/to/results-driven
    ```
 
-4. **验证**：
+4. Verify:
    ```
-   /cognitive-kernel status    # 查看安装状态
-   /cognitive-kernel check     # 合规验证
+   /cognitive-kernel status    # See what's installed and budget usage
+   /cognitive-kernel check     # Run L1 compliance check
    ```
 
-## 命令参考
+## Commands
 
-| 命令 | 用途 |
-|------|------|
-| `/cognitive-kernel setup` | 首次初始化 |
-| `/cognitive-kernel install <path>` | 安装底座（含冲突分析） |
-| `/cognitive-kernel uninstall <name>` | 卸载底座 |
-| `/cognitive-kernel status` | 查看安装状态 + 预算使用 |
-| `/cognitive-kernel check` | L1 合规验证（linter） |
-| `/cognitive-kernel review` | L4 对抗性审查（子 Agent） |
-| `/cognitive-kernel monitor` | 查看运行监控数据 |
-| `/cognitive-kernel optimize` | 基于数据的优化建议 |
-| `/cognitive-kernel regenerate` | 从 registry 重新生成产物 |
-| `/cognitive-kernel reorder` | 调整 L1 字段排序 |
+| Command | What It Does |
+|---------|-------------|
+| `setup` | First-time initialization — creates `~/.cognitive-kernel/`, baseline config, hooks |
+| `install <path>` | Install a base — reads manifest, runs conflict analysis, assembles into runtime |
+| `uninstall <name>` | Remove a base — cleans up all layers, regenerates runtime |
+| `status` | Installed bases, L5 budget usage, L1 field counts, tension mediations |
+| `check` | L1 compliance linter — verifies agent output includes required fields |
+| `review` | L4 adversarial review — spawns a sub-agent to challenge the current work |
+| `monitor` | View hook trigger logs — which rules fired, how often, when |
+| `optimize` | Data-driven suggestions — based on monitor data, recommends budget adjustments |
+| `regenerate` | Rebuild runtime from registry — reprocesses all manifests, reassembles all layers |
+| `reorder` | Adjust L1 field ordering — change which fields appear first in output templates |
 
-## 支持的平台
+## For Base Authors
 
-| 平台 | L2 Hook 支持 | 配置方式 |
-|------|-------------|---------|
-| Claude Code | 完整支持 | ft-settings.json PreToolUse hook |
-| Cursor | L2→L3 降级 | .cursorrules / .mdc 文件 |
-| Gemini CLI | L2→L3 降级 | GEMINI.md @引用 |
-
-不支持 hook 的平台自动将 L2 内容降级为 L3 触发器。
-
-## 底座作者指南
-
-### 使用 cognitive-kernel 的底座
-
-在底座目录中包含 `manifest.yml`：
+Every cognitive base that works with the kernel needs a `manifest.yml`:
 
 ```yaml
 schema_version: 1
 name: my-framework
-tier: 6                    # 5=核心透镜, 6=按需加载
+tier: 5                    # 5 = core (can contribute L5 rules), 6 = specialized (L6 only)
 
-triggers:
-  - if: "触发条件"
-    then: "执行动作"
+output_fields:             # L1: Required output fields
+  - prompt: "Assumptions audited: [list givens vs conventions]"
+    when: proposing_solution
 
-activation:
-  - "激活场景描述"
+hooks:                     # L2: Auto-injected reminders
+  - event: before_task_complete
+    inject: "Did I rebuild from fundamentals, or just reassemble the existing answer?"
+
+triggers:                  # L3: Pattern-matched rules
+  - if: "A problem statement contains an implicit 'should'"
+    then: "Name the presupposition explicitly before proceeding"
+    action_type: pause_and_check
+
+core_rules:                # L5: Always-on rules (tier 5 only)
+  - rule: "Separate givens from conventions before solving any problem"
+    rank: 1
+
+activation:                # When this base is most relevant
+  - "Analyzing assumptions in any domain"
 ```
 
-使用 `/cognitive-base-creator` 生成底座时，Phase 2.5 会自动从 cognitive-protocol.md 提取候选内容生成 manifest.yml。
+Use [Cognitive Base Creator](https://github.com/d-wwei/cognitive-base-creator) to generate complete bases with manifests automatically.
 
-### install.sh 双模式
-
-底座的 install.sh 支持双模式：
-- 检测到 cognitive-kernel → 建议使用 `/cognitive-kernel install`
-- 未检测到 → 走传统独立安装流程
-
-## 产物结构
+## Runtime Structure
 
 ```
 ~/.cognitive-kernel/
-  ├── cognitive-kernel.md       # 运行时产物（L1/L3/L4/L5/L6）
-  ├── cognitive-registry.yml    # 已安装底座注册表
+  ├── cognitive-kernel.md       # Assembled runtime (L1/L3/L4/L5/L6 content)
+  ├── cognitive-registry.yml    # Installed bases + conflict resolutions
   ├── hooks/
-  │   └── before-code-change.sh # L2 hook 脚本
+  │   └── before-code-change.sh # L2 hook script
   └── logs/
-      └── YYYY-MM-DD.jsonl      # Hook 触发日志
+      └── YYYY-MM-DD.jsonl      # Hook trigger event log
 ```
+
+## Supported Platforms
+
+| Platform | L2 Hook Support | How |
+|----------|----------------|-----|
+| Claude Code | Full | `ft-settings.json` PreToolUse hook |
+| Gemini CLI | Degraded (L2→L3) | `GEMINI.md` @ reference |
+| Cursor | Degraded (L2→L3) | `.cursorrules` / `.mdc` files |
+| Codex CLI | Degraded (L2→L3) | `AGENTS.md` inline injection |
+| OpenCode | Degraded (L2→L3) | `AGENTS.md` inline injection |
+| OpenClaw | Degraded (L2→L3) | `AGENTS.md` inline injection |
+
+Platforms without hook support automatically degrade L2 content to L3 triggers — rules still fire, just through pattern matching instead of event interception.
 
 ## License
 
 MIT
+
+## Links
+
+- [meta-cogbase](https://github.com/d-wwei/meta-cogbase) — Package manager for cognitive bases (includes kernel)
+- [Cognitive Base Creator](https://github.com/d-wwei/cognitive-base-creator) — Generate new bases from any thinking framework
+- [Article: Every Agent Is Missing a Layer](https://github.com/d-wwei/cognitive-base-creator/blob/main/docs/article-zh.md) — Why cognitive bases matter
