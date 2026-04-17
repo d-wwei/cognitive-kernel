@@ -944,7 +944,7 @@ setup 时询问："你使用哪些 AI 编程工具？" → 注册对应适配器
 **Step 0: 场景分类门控**（每次回复前强制执行）：
 - 在写任何回复前，先判断场景：proposing / claiming_done / 都不是
 - 防绕过规则：用户说"先帮我想方案"/"讨论一下" = 仍是 proposing；多方案比较后推荐 = proposing；代码实现中选了实现方式 = proposing
-- 唯一豁免：回复完全不涉及选择、判断或建议
+- 豁免条件（满足任一即可）：(1) 回复完全不涉及选择、判断或建议；(2) Pipeline 协议优先——当 pipeline 执行协议（如 apex-forge）已通过 Skill tool 加载但未初始化时，必须先完成 pipeline 初始化再应用 proposing 模板，pipeline 阶段内的输出仍需满足 L1 格式
 
 **proposing 模板字段**:
 1. "## 方案"（结构性 heading）
